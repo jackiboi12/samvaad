@@ -24,7 +24,10 @@ export async function getMyFriends(req, res) {
   try {
     const user = await User.findById(req.user.id)
       .select("friends")
-      .populate("friends", "fullName profilePic nativeLanguage learningLanguage");
+      .populate(
+        "friends",
+        "fullName profilePic nativeLanguage learningLanguage"
+      );
 
     res.status(200).json(user.friends);
   } catch (error) {
@@ -40,7 +43,9 @@ export async function sendFriendRequest(req, res) {
 
     // prevent sending req to yourself
     if (myId === recipientId) {
-      return res.status(400).json({ message: "You can't send friend request to yourself" });
+      return res
+        .status(400)
+        .json({ message: "You can't send friend request to yourself" });
     }
 
     const recipient = await User.findById(recipientId);
@@ -50,7 +55,9 @@ export async function sendFriendRequest(req, res) {
 
     // check if user is already friends
     if (recipient.friends.includes(myId)) {
-      return res.status(400).json({ message: "You are already friends with this user" });
+      return res
+        .status(400)
+        .json({ message: "You are already friends with this user" });
     }
 
     // check if a req already exists
@@ -62,9 +69,9 @@ export async function sendFriendRequest(req, res) {
     });
 
     if (existingRequest) {
-      return res
-        .status(400)
-        .json({ message: "A friend request already exists between you and this user" });
+      return res.status(400).json({
+        message: "A friend request already exists between you and this user",
+      });
     }
 
     const friendRequest = await FriendRequest.create({
@@ -91,7 +98,9 @@ export async function acceptFriendRequest(req, res) {
 
     // Verify the current user is the recipient
     if (friendRequest.recipient.toString() !== req.user.id) {
-      return res.status(403).json({ message: "You are not authorized to accept this request" });
+      return res
+        .status(403)
+        .json({ message: "You are not authorized to accept this request" });
     }
 
     friendRequest.status = "accepted";
@@ -119,7 +128,10 @@ export async function getFriendRequests(req, res) {
     const incomingReqs = await FriendRequest.find({
       recipient: req.user.id,
       status: "pending",
-    }).populate("sender", "fullName profilePic nativeLanguage learningLanguage");
+    }).populate(
+      "sender",
+      "fullName profilePic nativeLanguage learningLanguage"
+    );
 
     const acceptedReqs = await FriendRequest.find({
       sender: req.user.id,
@@ -138,11 +150,55 @@ export async function getOutgoingFriendReqs(req, res) {
     const outgoingRequests = await FriendRequest.find({
       sender: req.user.id,
       status: "pending",
-    }).populate("recipient", "fullName profilePic nativeLanguage learningLanguage");
+    }).populate(
+      "recipient",
+      "fullName profilePic nativeLanguage learningLanguage"
+    );
 
     res.status(200).json(outgoingRequests);
   } catch (error) {
     console.log("Error in getOutgoingFriendReqs controller", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+
+// Search users by name (for Friends page search bar)
+export async function searchUsers(req, res) {
+  try {
+    const query = req.query.q || "";
+    const currentUserId = req.user.id;
+    if (!query.trim()) return res.json([]);
+
+    // Find users whose fullName matches the query, excluding the current user
+    const users = await User.find({
+      _id: { $ne: currentUserId },
+      fullName: { $regex: query, $options: "i" },
+      isOnboarded: true,
+    }).select("fullName profilePic nativeLanguage learningLanguage");
+
+    res.json(users);
+  } catch (error) {
+    console.error("Error in searchUsers controller", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+
+// Delete account and all related data
+export async function deleteAccount(req, res) {
+  try {
+    const userId = req.user.id;
+    // Delete all friend requests where user is sender or recipient
+    await FriendRequest.deleteMany({
+      $or: [{ sender: userId }, { recipient: userId }],
+    });
+    // Delete the user
+    await User.findByIdAndDelete(userId);
+    // (Optional) Delete other user-related data here
+    res
+      .status(200)
+      .json({ message: "Account and all related data deleted successfully." });
+  } catch (error) {
+    console.error("Error in deleteAccount controller", error.message);
     res.status(500).json({ message: "Internal Server Error" });
   }
 }

@@ -73,3 +73,15 @@ export async function updateProfile({ nativeLanguage, learningLanguage }) {
   });
   return response.data;
 }
+
+export async function searchUsers(query) {
+  const response = await axiosInstance.get(
+    `/auth/search?q=${encodeURIComponent(query)}`
+  );
+  return response.data;
+}
+
+export async function deleteAccount() {
+  const response = await axiosInstance.delete("/auth/delete-account");
+  return response.data;
+}
