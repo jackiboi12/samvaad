@@ -20,6 +20,7 @@ import { LANGUAGES } from "../constants";
 import FriendCard from "../components/FriendCard";
 import NoFriendsFound from "../components/NoFriendsFound";
 import LanguageFlag from "../components/LanguageFlag";
+import useAuthUser from "../hooks/useAuthUser";
 
 const HomePage = () => {
   const queryClient = useQueryClient();
@@ -52,6 +53,8 @@ const HomePage = () => {
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ["outgoingFriendReqs"] }),
   });
+
+  const { authUser } = useAuthUser();
 
   useEffect(() => {
     const outgoingIds = new Set();
@@ -96,13 +99,38 @@ const HomePage = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
+    <div className="p-4 sm:p-6 lg:p-8 bg-base-100/70 min-h-screen">
       <div className="container mx-auto space-y-10">
+        {/* Current User Profile Section */}
+        {authUser && (
+          <div className="flex items-center gap-4 mb-6 p-4 rounded-2xl bg-base-100/80 shadow border border-base-200 max-w-xl mx-auto">
+            <div className="avatar w-16 h-16 rounded-full ring ring-primary ring-offset-2 ring-offset-base-100 shadow-md overflow-hidden">
+              <img
+                src={authUser.profilePic}
+                alt={authUser.fullName}
+                className="object-cover w-full h-full"
+              />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-lg leading-tight truncate">
+                {authUser.fullName}
+              </p>
+              <p className="text-sm text-success flex items-center gap-2 mt-1">
+                <span className="size-3 rounded-full bg-success inline-block" />
+                Online
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
             Your Friends
           </h2>
-          <Link to="/notifications" className="btn btn-outline btn-sm">
+          <Link
+            to="/notifications"
+            className="btn btn-primary btn-sm rounded-full shadow-md transition hover:scale-105 flex items-center gap-2"
+          >
             <UsersIcon className="mr-2 size-4" />
             Friend Requests
           </Link>
@@ -115,7 +143,7 @@ const HomePage = () => {
         ) : friends.length === 0 ? (
           <NoFriendsFound />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {friends.map((friend) => (
               <FriendCard key={friend._id} friend={friend} />
             ))}
@@ -183,19 +211,23 @@ const HomePage = () => {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredRecommendedUsers.map((user) => {
                 const hasRequestBeenSent = outgoingRequestsIds.has(user._id);
 
                 return (
                   <div
                     key={user._id}
-                    className="card bg-base-200 hover:shadow-lg transition-all duration-300"
+                    className="card bg-base-100/80 backdrop-blur rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-200 border border-base-200"
                   >
                     <div className="card-body p-5 space-y-4">
-                      <div className="flex items-center gap-3">
-                        <div className="avatar size-16 rounded-full">
-                          <img src={user.profilePic} alt={user.fullName} />
+                      <div className="flex items-center gap-4">
+                        <div className="avatar w-14 h-14 rounded-full ring ring-primary ring-offset-2 ring-offset-base-100 shadow-md overflow-hidden">
+                          <img
+                            src={user.profilePic}
+                            alt={user.fullName}
+                            className="object-cover w-full h-full"
+                          />
                         </div>
 
                         <div>
@@ -212,12 +244,12 @@ const HomePage = () => {
                       </div>
 
                       {/* Languages with flags */}
-                      <div className="flex flex-wrap gap-1.5">
-                        <span className="badge badge-secondary">
+                      <div className="flex flex-wrap gap-2">
+                        <span className="badge badge-secondary badge-lg text-xs px-3 py-1 rounded-full flex items-center gap-1">
                           <LanguageFlag language={user.nativeLanguage} />
                           Native: {capitialize(user.nativeLanguage)}
                         </span>
-                        <span className="badge badge-outline">
+                        <span className="badge badge-outline badge-lg text-xs px-3 py-1 rounded-full flex items-center gap-1">
                           <LanguageFlag language={user.learningLanguage} />
                           Learning: {capitialize(user.learningLanguage)}
                         </span>
@@ -229,7 +261,7 @@ const HomePage = () => {
 
                       {/* Action button */}
                       <button
-                        className={`btn w-full mt-2 ${
+                        className={`btn w-full mt-2 rounded-full shadow-md transition hover:scale-105 text-base ${
                           hasRequestBeenSent ? "btn-disabled" : "btn-primary"
                         } `}
                         onClick={() => sendRequestMutation(user._id)}

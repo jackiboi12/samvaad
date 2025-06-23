@@ -3,28 +3,35 @@ import { LANGUAGE_TO_FLAG } from "../constants";
 
 const FriendCard = ({ friend }) => {
   return (
-    <div className="card bg-base-200 hover:shadow-md transition-shadow">
-      <div className="card-body p-4">
+    <div className="card bg-base-100/80 backdrop-blur rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-200 border border-base-200">
+      <div className="card-body p-5">
         {/* USER INFO */}
-        <div className="flex items-center gap-3 mb-3">
-          <div className="avatar size-12">
-            <img src={friend.profilePic} alt={friend.fullName} />
+        <div className="flex items-center gap-4 mb-4">
+          <div className="avatar w-14 h-14 rounded-full ring ring-primary ring-offset-2 ring-offset-base-100 shadow-md overflow-hidden">
+            <img
+              src={friend.profilePic}
+              alt={friend.fullName}
+              className="object-cover w-full h-full"
+            />
           </div>
-          <h3 className="font-semibold truncate">{friend.fullName}</h3>
+          <h3 className="font-semibold text-lg truncate">{friend.fullName}</h3>
         </div>
 
-        <div className="flex flex-wrap gap-1.5 mb-3">
-          <span className="badge badge-secondary text-xs">
+        <div className="flex flex-wrap gap-2 mb-4">
+          <span className="badge badge-secondary badge-lg text-xs px-3 py-1 rounded-full flex items-center gap-1">
             {getLanguageFlag(friend.nativeLanguage)}
             Native: {friend.nativeLanguage}
           </span>
-          <span className="badge badge-outline text-xs">
+          <span className="badge badge-outline badge-lg text-xs px-3 py-1 rounded-full flex items-center gap-1">
             {getLanguageFlag(friend.learningLanguage)}
             Learning: {friend.learningLanguage}
           </span>
         </div>
 
-        <Link to={`/chat/${friend._id}`} className="btn btn-outline w-full">
+        <Link
+          to={`/chat/${friend._id}`}
+          className="btn btn-primary w-full rounded-full shadow-md transition hover:scale-105"
+        >
           Message
         </Link>
       </div>
