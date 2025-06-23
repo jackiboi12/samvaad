@@ -27,13 +27,14 @@ export async function signup(req, res) {
         .json({ message: "Email already exists please use another one " });
     }
 
-    const idx = Math.floor(Math.random() * 100) + 1;
-    const randomAvatar = `https://avatar.iran.liara.run/public/${idx}.png`;
+    const dicebearAvatar = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(
+      fullName
+    )}`;
     const newUser = await User.create({
       fullName,
       email,
       password,
-      profilePic: randomAvatar,
+      profilePic: dicebearAvatar,
     });
 
     try {
@@ -124,9 +125,16 @@ export async function onboard(req, res) {
   try {
     const userId = req.user._id;
 
-    const { fullName, bio, nativeLanguage, learningLanguage, location } = req.body;
+    const { fullName, bio, nativeLanguage, learningLanguage, location } =
+      req.body;
 
-    if (!fullName || !bio || !nativeLanguage || !learningLanguage || !location) {
+    if (
+      !fullName ||
+      !bio ||
+      !nativeLanguage ||
+      !learningLanguage ||
+      !location
+    ) {
       return res.status(400).json({
         message: "All fields are required",
         missingFields: [
@@ -135,7 +143,7 @@ export async function onboard(req, res) {
           !nativeLanguage && "nativeLanguage",
           !learningLanguage && "learningLanguage",
           !location && "location",
-        ].filter(Boolean) // Remove undefined values
+        ].filter(Boolean), // Remove undefined values
       });
     }
 
@@ -148,7 +156,8 @@ export async function onboard(req, res) {
       { new: true }
     );
 
-    if (!updatedUser) return res.status(404).json({ message: "User not found" });
+    if (!updatedUser)
+      return res.status(404).json({ message: "User not found" });
 
     try {
       await upsertStreamUser({
@@ -156,14 +165,39 @@ export async function onboard(req, res) {
         name: updatedUser.fullName,
         image: updatedUser.profilePic || "",
       });
-      console.log(`Stream user updated after onboarding for ${updatedUser.fullName}`);
+      console.log(
+        `Stream user updated after onboarding for ${updatedUser.fullName}`
+      );
     } catch (streamError) {
-      console.log("Error updating Stream user during onboarding:", streamError.message);
+      console.log(
+        "Error updating Stream user during onboarding:",
+        streamError.message
+      );
     }
 
     res.status(200).json({ success: true, user: updatedUser });
   } catch (error) {
     console.error("Onboarding error:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+
+export async function updateProfile(req, res) {
+  try {
+    const userId = req.user._id;
+    const { nativeLanguage, learningLanguage } = req.body;
+    if (!nativeLanguage || !learningLanguage) {
+      return res.status(400).json({ message: "Both languages are required" });
+    }
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { nativeLanguage, learningLanguage },
+      { new: true }
+    );
+    if (!updatedUser)
+      return res.status(404).json({ message: "User not found" });
+    res.status(200).json({ success: true, user: updatedUser });
+  } catch (error) {
     res.status(500).json({ message: "Internal Server Error" });
   }
 }

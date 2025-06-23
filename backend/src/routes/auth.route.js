@@ -4,6 +4,7 @@ import {
   logout,
   onboard,
   signup,
+  updateProfile,
 } from "../controllers/auth.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
 const router = express.Router();
@@ -19,4 +20,7 @@ router.get("/me", protectRoute, (req, res) => {
     user: req.user,
   });
 });
+
+router.patch("/profile", protectRoute, updateProfile);
+
 export default router;
