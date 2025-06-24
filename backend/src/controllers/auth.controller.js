@@ -2,7 +2,7 @@ import { upsertStreamUser } from "../lib/stream.js";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 export async function signup(req, res) {
-  console.log("Request Body:", req.body); // 👈 add this
+  // console.log("Request Body:", req.body); // 👈 add this
   // Handle user signup logic here
   // res.send("User signup route");
   const { email, password, fullName } = req.body;
